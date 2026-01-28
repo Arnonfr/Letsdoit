@@ -1,0 +1,14 @@
+{
+  "name": "figma-ai-comment-assistant",
+  "version": "1.0.0",
+  "description": "Figma plugin that helps designers implement comments using AI suggestions",
+  "scripts": {
+    "build": "node build.mjs",
+    "watch": "node build.mjs --watch"
+  },
+  "devDependencies": {
+    "@figma/plugin-typings": "^1.100.0",
+    "esbuild": "^0.24.0",
+    "typescript": "^5.6.0"
+  }
+}

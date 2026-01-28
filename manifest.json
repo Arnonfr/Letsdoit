@@ -1,0 +1,14 @@
+{
+  "name": "AI Comment Assistant",
+  "id": "ai-comment-assistant-v1",
+  "api": "1.0.0",
+  "main": "dist/code.js",
+  "ui": "dist/ui.html",
+  "editorType": ["figma"],
+  "networkAccess": {
+    "allowedDomains": [
+      "https://api.anthropic.com",
+      "https://api.figma.com"
+    ]
+  }
+}
