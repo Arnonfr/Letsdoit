@@ -2,12 +2,6 @@
 
 import type { UIMessage, NodeInfo, ProposedAction } from './types';
 
-// ── Show UI ────────────────────────────────────────────────────
-figma.showUI(__html__, { width: 380, height: 560, themeColors: true });
-
-// ── Send file key on startup ───────────────────────────────────
-figma.ui.postMessage({ type: 'file-key', fileKey: figma.fileKey });
-
 // ── Node Info Helper ───────────────────────────────────────────
 function getNodeInfo(nodeId: string): NodeInfo | null {
   const node = figma.getNodeById(nodeId);
@@ -21,12 +15,10 @@ function getNodeInfo(nodeId: string): NodeInfo | null {
     locked: 'locked' in node ? (node as SceneNode).locked : false,
   };
 
-  // Text content
   if (node.type === 'TEXT') {
     info.text = (node as TextNode).characters;
   }
 
-  // Fill colors
   if ('fills' in node) {
     const fills = (node as GeometryMixin).fills;
     if (Array.isArray(fills)) {
@@ -47,7 +39,6 @@ function getNodeInfo(nodeId: string): NodeInfo | null {
     }
   }
 
-  // Parent name
   if (node.parent && node.parent.type !== 'PAGE') {
     info.parentName = node.parent.name;
   }
@@ -77,13 +68,11 @@ async function executeAction(
 
   try {
     switch (action.type) {
-      // ── Change Text ──
       case 'change_text': {
         if (node.type !== 'TEXT') {
           return { success: false, error: 'Node is not a text element' };
         }
         const textNode = node as TextNode;
-        // Load font(s)
         if (textNode.fontName === figma.mixed) {
           const len = textNode.characters.length;
           for (let i = 0; i < len; i++) {
@@ -98,7 +87,6 @@ async function executeAction(
         return { success: true };
       }
 
-      // ── Change Color ──
       case 'change_color': {
         if (!('fills' in node)) {
           return { success: false, error: 'Node does not support fills' };
@@ -122,13 +110,11 @@ async function executeAction(
         return { success: true };
       }
 
-      // ── Delete Node ──
       case 'delete_node': {
         node.remove();
         return { success: true };
       }
 
-      // ── Hide Node ──
       case 'hide_node': {
         if (!('visible' in node)) {
           return { success: false, error: 'Node does not support visibility' };
@@ -137,7 +123,6 @@ async function executeAction(
         return { success: true };
       }
 
-      // ── Duplicate Node ──
       case 'duplicate_node': {
         if (!('clone' in node)) {
           return { success: false, error: 'Node cannot be duplicated' };
@@ -155,11 +140,14 @@ async function executeAction(
   }
 }
 
-// ── Message Handler ────────────────────────────────────────────
+// ── Register message handler BEFORE showing UI ─────────────────
 figma.ui.onmessage = async (msg: UIMessage) => {
   switch (msg.type) {
     case 'get-file-key': {
-      figma.ui.postMessage({ type: 'file-key', fileKey: figma.fileKey });
+      figma.ui.postMessage({
+        type: 'file-key',
+        fileKey: figma.fileKey ?? '',
+      });
       break;
     }
 
@@ -186,19 +174,34 @@ figma.ui.onmessage = async (msg: UIMessage) => {
     }
 
     case 'store-get': {
-      const value = await figma.clientStorage.getAsync(msg.key);
-      figma.ui.postMessage({
-        type: 'store-value',
-        key: msg.key,
-        value: value ?? null,
-      });
+      try {
+        const value = await figma.clientStorage.getAsync(msg.key);
+        figma.ui.postMessage({
+          type: 'store-value',
+          key: msg.key,
+          value: value ?? null,
+        });
+      } catch {
+        figma.ui.postMessage({
+          type: 'store-value',
+          key: msg.key,
+          value: null,
+        });
+      }
       break;
     }
 
     case 'store-set': {
-      await figma.clientStorage.setAsync(msg.key, msg.value);
+      try {
+        await figma.clientStorage.setAsync(msg.key, msg.value);
+      } catch {
+        // Silently fail on storage errors
+      }
       figma.ui.postMessage({ type: 'store-saved', key: msg.key });
       break;
     }
   }
 };
+
+// ── Show UI (after handler is registered) ──────────────────────
+figma.showUI(__html__, { width: 380, height: 560, themeColors: true });

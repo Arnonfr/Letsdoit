@@ -3,9 +3,7 @@ import type {
   CommentStatus,
   CommentType,
   NodeInfo,
-  Proposal,
   PluginMessage,
-  ProposedAction,
 } from '../types';
 import { analyzeComment, classifyComment, reAnalyzeComment } from './ai';
 
@@ -36,11 +34,13 @@ function $(id: string): HTMLElement {
 }
 
 function show(id: string) {
-  $(id).classList.remove('hidden');
+  const el = document.getElementById(id);
+  if (el) el.classList.remove('hidden');
 }
 
 function hide(id: string) {
-  $(id).classList.add('hidden');
+  const el = document.getElementById(id);
+  if (el) el.classList.add('hidden');
 }
 
 function showView(view: 'setup' | 'inbox' | 'focus') {
@@ -78,18 +78,30 @@ function postToPlugin(msg: object) {
   parent.postMessage({ pluginMessage: msg }, '*');
 }
 
-/** Promise-based message exchange with the plugin sandbox */
+/**
+ * Promise-based message exchange with the plugin sandbox.
+ * Includes timeout to prevent hanging. Optionally matches on a `key` field.
+ */
 function requestFromPlugin<T extends PluginMessage>(
   msg: object,
-  responseType: string
+  responseType: string,
+  matchKey?: string,
+  timeoutMs: number = 5000
 ): Promise<T> {
-  return new Promise((resolve) => {
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(() => {
+      window.removeEventListener('message', handler);
+      reject(new Error(`Plugin response timeout for "${responseType}"`));
+    }, timeoutMs);
+
     const handler = (event: MessageEvent) => {
-      const data = event.data.pluginMessage as PluginMessage;
-      if (data && data.type === responseType) {
-        window.removeEventListener('message', handler);
-        resolve(data as T);
-      }
+      const data = event.data?.pluginMessage as PluginMessage | undefined;
+      if (!data || data.type !== responseType) return;
+      if (matchKey && 'key' in data && (data as { key: string }).key !== matchKey) return;
+
+      clearTimeout(timer);
+      window.removeEventListener('message', handler);
+      resolve(data as T);
     };
     window.addEventListener('message', handler);
     postToPlugin(msg);
@@ -124,7 +136,6 @@ async function fetchComments(fileKey: string, token: string): Promise<FigmaComme
 
 // ── Transform Figma Comments → CommentItems ────────────────────
 function transformComments(raw: FigmaComment[]): CommentItem[] {
-  // Filter: only top-level (non-reply), non-resolved comments
   return raw
     .filter((c) => !c.parent_id && !c.resolved_at)
     .map((c) => ({
@@ -158,7 +169,7 @@ function initSetup() {
     state.claudeApiKey = claudeKey;
     state.figmaToken = figmaToken;
 
-    // Save to plugin storage
+    // Save to plugin storage (fire and forget)
     postToPlugin({ type: 'store-set', key: 'claude-api-key', value: claudeKey });
     postToPlugin({ type: 'store-set', key: 'figma-token', value: figmaToken });
 
@@ -182,7 +193,6 @@ function renderInbox() {
   empty.classList.add('hidden');
   list.classList.remove('hidden');
 
-  // Stats
   const counts: Record<string, number> = {};
   for (const c of state.comments) {
     counts[c.status] = (counts[c.status] || 0) + 1;
@@ -211,7 +221,6 @@ function renderInbox() {
     )
     .join('');
 
-  // Comment cards
   list.innerHTML = state.comments
     .map((c) => {
       const typeLabel = formatCommentType(c.commentType);
@@ -236,7 +245,6 @@ function renderInbox() {
     })
     .join('');
 
-  // Click handlers
   list.querySelectorAll('.comment-card').forEach((card) => {
     card.addEventListener('click', () => {
       const id = (card as HTMLElement).dataset.id!;
@@ -270,14 +278,12 @@ async function openFocusView(commentId: string) {
 
   showView('focus');
 
-  // Highlight node on canvas
   if (comment.nodeId) {
     postToPlugin({ type: 'select-node', nodeId: comment.nodeId });
   }
 
   renderFocusComment(comment);
 
-  // If no proposal yet, generate one
   if (!comment.proposal && comment.status === 'pending') {
     await generateProposal(comment);
   } else {
@@ -296,7 +302,6 @@ function renderFocusComment(comment: CommentItem) {
     <div id="focus-node-box"></div>
   `;
 
-  // Show node info if available
   if (comment.nodeId) {
     requestFromPlugin<Extract<PluginMessage, { type: 'node-info' }>>(
       { type: 'get-node-info', nodeId: comment.nodeId },
@@ -316,6 +321,8 @@ function renderFocusComment(comment: CommentItem) {
       } else {
         box.innerHTML = `<div class="focus-node-info">Node not found on canvas.</div>`;
       }
+    }).catch(() => {
+      // Node info fetch failed silently
     });
   }
 }
@@ -349,16 +356,19 @@ async function generateProposal(comment: CommentItem) {
   `;
 
   try {
-    // Get node info if we have a node ID
     let nodeInfo: NodeInfo | null = null;
     if (comment.nodeId) {
-      const msg = await requestFromPlugin<Extract<PluginMessage, { type: 'node-info' }>>(
-        { type: 'get-node-info', nodeId: comment.nodeId },
-        'node-info'
-      );
-      nodeInfo = msg.info;
+      try {
+        const msg = await requestFromPlugin<Extract<PluginMessage, { type: 'node-info' }>>(
+          { type: 'get-node-info', nodeId: comment.nodeId },
+          'node-info'
+        );
+        nodeInfo = msg.info;
+      } catch {
+        nodeInfo = null;
+      }
 
-      if (!nodeInfo) {
+      if (nodeInfo === null) {
         comment.status = 'needs_clarification';
         comment.proposal = {
           confidence: 'low',
@@ -490,8 +500,11 @@ function renderFocusActions(comment: CommentItem) {
 
   if (comment.status === 'applied' || comment.status === 'skipped') {
     el.innerHTML = `
-      <button class="btn-secondary" onclick="document.getElementById('back-btn').click()">Back to list</button>
+      <button class="btn-secondary" id="back-to-list-btn">Back to list</button>
     `;
+    $('back-to-list-btn').addEventListener('click', () => {
+      $('back-btn').click();
+    });
     return;
   }
 
@@ -506,45 +519,45 @@ function renderFocusActions(comment: CommentItem) {
     <button class="btn-skip" id="skip-btn">Skip</button>
   `;
 
-  // Apply
   $('apply-btn').addEventListener('click', async () => {
     if (!comment.proposal || !comment.proposal.actions.length) return;
 
     showLoading('Applying changes...');
 
-    let allSuccess = true;
     for (const action of comment.proposal.actions) {
-      const result = await requestFromPlugin<Extract<PluginMessage, { type: 'action-executed' }>>(
-        { type: 'execute-action', action },
-        'action-executed'
-      );
+      try {
+        const result = await requestFromPlugin<Extract<PluginMessage, { type: 'action-executed' }>>(
+          { type: 'execute-action', action },
+          'action-executed',
+          undefined,
+          10000
+        );
 
-      if (!result.success) {
-        allSuccess = false;
+        if (!result.success) {
+          hideLoading();
+          showToast(`Failed: ${result.error || 'Unknown error'}`, 'error');
+          return;
+        }
+      } catch {
         hideLoading();
-        showToast(`Failed: ${result.error || 'Unknown error'}`, 'error');
+        showToast('Action timed out. Please try again.', 'error');
         return;
       }
     }
 
     hideLoading();
-
-    if (allSuccess) {
-      comment.status = 'applied';
-      showToast('Changes applied!', 'success');
-      renderFocusProposal(comment);
-      renderFocusActions(comment);
-    }
+    comment.status = 'applied';
+    showToast('Changes applied!', 'success');
+    renderFocusProposal(comment);
+    renderFocusActions(comment);
   });
 
-  // Edit
   $('edit-btn').addEventListener('click', () => {
     show('edit-modal');
     (document.getElementById('edit-textarea') as HTMLTextAreaElement).value = '';
     (document.getElementById('edit-textarea') as HTMLTextAreaElement).focus();
   });
 
-  // Skip
   $('skip-btn').addEventListener('click', () => {
     comment.status = 'skipped';
     showToast('Comment skipped', 'info');
@@ -578,11 +591,15 @@ function initEditModal() {
     try {
       let nodeInfo: NodeInfo | null = null;
       if (comment.nodeId) {
-        const msg = await requestFromPlugin<Extract<PluginMessage, { type: 'node-info' }>>(
-          { type: 'get-node-info', nodeId: comment.nodeId },
-          'node-info'
-        );
-        nodeInfo = msg.info;
+        try {
+          const msg = await requestFromPlugin<Extract<PluginMessage, { type: 'node-info' }>>(
+            { type: 'get-node-info', nodeId: comment.nodeId },
+            'node-info'
+          );
+          nodeInfo = msg.info;
+        } catch {
+          nodeInfo = null;
+        }
       }
 
       const proposal = await reAnalyzeComment(
@@ -616,12 +633,17 @@ async function loadComments() {
 
   try {
     if (!state.fileKey) {
-      // Request file key from plugin
-      const msg = await requestFromPlugin<Extract<PluginMessage, { type: 'file-key' }>>(
-        { type: 'get-file-key' },
-        'file-key'
-      );
-      state.fileKey = msg.fileKey;
+      try {
+        const msg = await requestFromPlugin<Extract<PluginMessage, { type: 'file-key' }>>(
+          { type: 'get-file-key' },
+          'file-key',
+          undefined,
+          3000
+        );
+        state.fileKey = msg.fileKey;
+      } catch {
+        throw new Error('Could not get file key. Make sure the file is saved to Figma.');
+      }
     }
 
     if (!state.fileKey) {
@@ -635,7 +657,6 @@ async function loadComments() {
     showView('inbox');
     renderInbox();
 
-    // Background classification
     classifyCommentsInBackground();
   } catch (err: unknown) {
     hideLoading();
@@ -650,7 +671,6 @@ async function loadComments() {
   }
 }
 
-/** Classify comments in background (non-blocking) */
 async function classifyCommentsInBackground() {
   for (const comment of state.comments) {
     if (comment.status !== 'pending') continue;
@@ -658,12 +678,11 @@ async function classifyCommentsInBackground() {
     try {
       const type = await classifyComment(state.claudeApiKey, comment.message);
       comment.commentType = type;
-      // Re-render inbox to show updated badges
       if (state.view === 'inbox') {
         renderInbox();
       }
     } catch {
-      // Silently skip classification errors
+      // Silently skip
     }
   }
 }
@@ -681,7 +700,6 @@ function initNavigation() {
 
   $('settings-btn').addEventListener('click', () => {
     showView('setup');
-    // Pre-fill current keys
     (document.getElementById('claude-key') as HTMLInputElement).value = state.claudeApiKey;
     (document.getElementById('figma-token') as HTMLInputElement).value = state.figmaToken;
   });
@@ -689,34 +707,49 @@ function initNavigation() {
 
 // ── Init ───────────────────────────────────────────────────────
 async function init() {
-  initSetup();
-  initNavigation();
-  initEditModal();
+  // Set up UI event listeners first (safe, synchronous)
+  try {
+    initSetup();
+    initNavigation();
+    initEditModal();
+  } catch (err) {
+    console.error('[AI Comment Assistant] UI init error:', err);
+  }
 
-  // Listen for file key from plugin
+  // Listen for file key messages from plugin
   window.addEventListener('message', (event) => {
-    const msg = event.data.pluginMessage as PluginMessage;
+    const msg = event.data?.pluginMessage;
     if (msg && msg.type === 'file-key') {
       state.fileKey = msg.fileKey;
     }
   });
 
-  // Load stored keys
-  const claudeKeyMsg = await requestFromPlugin<Extract<PluginMessage, { type: 'store-value' }>>(
-    { type: 'store-get', key: 'claude-api-key' },
-    'store-value'
-  );
+  // Try to load stored keys (with timeouts to prevent hanging)
+  try {
+    const claudeKeyMsg = await requestFromPlugin<Extract<PluginMessage, { type: 'store-value' }>>(
+      { type: 'store-get', key: 'claude-api-key' },
+      'store-value',
+      'claude-api-key',
+      3000
+    );
 
-  const figmaTokenMsg = await requestFromPlugin<Extract<PluginMessage, { type: 'store-value' }>>(
-    { type: 'store-get', key: 'figma-token' },
-    'store-value'
-  );
+    const figmaTokenMsg = await requestFromPlugin<Extract<PluginMessage, { type: 'store-value' }>>(
+      { type: 'store-get', key: 'figma-token' },
+      'store-value',
+      'figma-token',
+      3000
+    );
 
-  if (claudeKeyMsg.value && figmaTokenMsg.value) {
-    state.claudeApiKey = claudeKeyMsg.value;
-    state.figmaToken = figmaTokenMsg.value;
-    await loadComments();
-  } else {
+    if (claudeKeyMsg.value && figmaTokenMsg.value) {
+      state.claudeApiKey = claudeKeyMsg.value;
+      state.figmaToken = figmaTokenMsg.value;
+      await loadComments();
+    } else {
+      showView('setup');
+    }
+  } catch {
+    // Timeout or error — just show setup screen
+    console.log('[AI Comment Assistant] No stored keys found, showing setup.');
     showView('setup');
   }
 }

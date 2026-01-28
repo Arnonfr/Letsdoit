@@ -1,0 +1,1493 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <style>/* ── Reset & Base ───────────────────────────────────────────── */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  height: 100%;
+  font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-size: 12px;
+  color: var(--figma-color-text, #333);
+  background: var(--figma-color-bg, #fff);
+  overflow: hidden;
+}
+
+#app {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+/* ── Utilities ──────────────────────────────────────────────── */
+.hidden { display: none !important; }
+
+/* ── Views ──────────────────────────────────────────────────── */
+.view {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* ── Setup View ─────────────────────────────────────────────── */
+.setup-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 24px 20px;
+  gap: 16px;
+}
+
+.setup-header {
+  text-align: center;
+  margin-bottom: 8px;
+}
+
+.logo {
+  width: 40px;
+  height: 40px;
+  margin: 0 auto 12px;
+  background: #7c3aed;
+  color: #fff;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 16px;
+}
+
+.setup-header h1 {
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.subtitle {
+  color: var(--figma-color-text-secondary, #666);
+  font-size: 12px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.form-group label {
+  font-weight: 500;
+  font-size: 11px;
+  color: var(--figma-color-text-secondary, #666);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.form-group input {
+  padding: 8px 10px;
+  border: 1px solid var(--figma-color-border, #ddd);
+  border-radius: 6px;
+  font-size: 12px;
+  background: var(--figma-color-bg, #fff);
+  color: var(--figma-color-text, #333);
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.form-group input:focus {
+  border-color: #7c3aed;
+  box-shadow: 0 0 0 2px rgba(124, 58, 237, 0.15);
+}
+
+.hint {
+  font-size: 10px;
+  color: var(--figma-color-text-tertiary, #999);
+}
+
+.error-msg {
+  color: #dc2626;
+  font-size: 11px;
+  text-align: center;
+  padding: 6px;
+  background: #fef2f2;
+  border-radius: 6px;
+}
+
+/* ── Buttons ────────────────────────────────────────────────── */
+.btn-primary {
+  padding: 10px 16px;
+  background: #7c3aed;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.btn-primary:hover { background: #6d28d9; }
+.btn-primary:active { background: #5b21b6; }
+.btn-primary:disabled {
+  background: #c4b5fd;
+  cursor: not-allowed;
+}
+
+.btn-secondary {
+  padding: 8px 14px;
+  background: var(--figma-color-bg-secondary, #f3f4f6);
+  color: var(--figma-color-text, #333);
+  border: 1px solid var(--figma-color-border, #ddd);
+  border-radius: 6px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.btn-secondary:hover {
+  background: var(--figma-color-bg-tertiary, #e5e7eb);
+}
+
+.btn-icon {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  font-size: 16px;
+  cursor: pointer;
+  color: var(--figma-color-text-secondary, #666);
+  transition: background 0.15s;
+}
+
+.btn-icon:hover {
+  background: var(--figma-color-bg-secondary, #f3f4f6);
+  border-color: var(--figma-color-border, #ddd);
+}
+
+.btn-back {
+  padding: 6px 10px;
+  background: none;
+  border: none;
+  font-size: 12px;
+  color: #7c3aed;
+  cursor: pointer;
+  text-align: left;
+  font-weight: 500;
+}
+
+.btn-back:hover { text-decoration: underline; }
+
+/* ── Inbox Header ───────────────────────────────────────────── */
+.inbox-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--figma-color-border, #eee);
+}
+
+.inbox-header h2 {
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.header-actions {
+  display: flex;
+  gap: 4px;
+}
+
+.inbox-stats {
+  display: flex;
+  gap: 8px;
+  padding: 8px 16px;
+  font-size: 11px;
+  color: var(--figma-color-text-secondary, #666);
+  border-bottom: 1px solid var(--figma-color-border, #eee);
+  flex-wrap: wrap;
+}
+
+.stat-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 2px 6px;
+  border-radius: 10px;
+  background: var(--figma-color-bg-secondary, #f3f4f6);
+}
+
+/* ── Comment List ───────────────────────────────────────────── */
+.comment-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 4px 0;
+}
+
+.comment-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 16px;
+  cursor: pointer;
+  border-bottom: 1px solid var(--figma-color-border, #f0f0f0);
+  transition: background 0.1s;
+}
+
+.comment-card:hover {
+  background: var(--figma-color-bg-secondary, #f9fafb);
+}
+
+.comment-card.applied {
+  opacity: 0.5;
+}
+
+.comment-status-icon {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.status-pending { background: #fef3c7; color: #92400e; }
+.status-proposal_ready { background: #ede9fe; color: #6d28d9; }
+.status-needs_clarification { background: #fef9c3; color: #854d0e; }
+.status-applied { background: #d1fae5; color: #065f46; }
+.status-skipped { background: #f3f4f6; color: #6b7280; }
+
+.comment-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.comment-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 3px;
+}
+
+.comment-author {
+  font-weight: 500;
+  font-size: 11px;
+  color: var(--figma-color-text, #333);
+}
+
+.comment-type-badge {
+  font-size: 9px;
+  padding: 1px 5px;
+  border-radius: 8px;
+  background: var(--figma-color-bg-secondary, #f3f4f6);
+  color: var(--figma-color-text-secondary, #666);
+  text-transform: uppercase;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+}
+
+.comment-text {
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--figma-color-text, #333);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.comment-frame {
+  font-size: 10px;
+  color: var(--figma-color-text-tertiary, #999);
+  margin-top: 3px;
+}
+
+/* ── Empty State ────────────────────────────────────────────── */
+.empty-state {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 40px 20px;
+  color: var(--figma-color-text-secondary, #666);
+}
+
+/* ── Focus View ─────────────────────────────────────────────── */
+#focus-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0 16px 16px;
+}
+
+.focus-section {
+  margin-bottom: 16px;
+}
+
+.focus-section h3 {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--figma-color-text-secondary, #666);
+  margin-bottom: 8px;
+}
+
+.focus-comment-text {
+  font-size: 13px;
+  line-height: 1.5;
+  padding: 10px 12px;
+  background: var(--figma-color-bg-secondary, #f9fafb);
+  border-radius: 8px;
+  border-left: 3px solid #7c3aed;
+}
+
+.focus-author {
+  font-size: 11px;
+  color: var(--figma-color-text-secondary, #666);
+  margin-top: 6px;
+}
+
+.focus-node-info {
+  font-size: 11px;
+  color: var(--figma-color-text-secondary, #666);
+  padding: 8px 10px;
+  background: var(--figma-color-bg-secondary, #f9fafb);
+  border-radius: 6px;
+  margin-top: 8px;
+}
+
+.focus-node-info span {
+  display: block;
+  margin-bottom: 2px;
+}
+
+/* ── Proposal ───────────────────────────────────────────────── */
+.proposal-card {
+  padding: 12px;
+  border: 1px solid var(--figma-color-border, #e5e7eb);
+  border-radius: 8px;
+  background: var(--figma-color-bg, #fff);
+}
+
+.proposal-confidence {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 8px;
+  padding: 2px 8px;
+  border-radius: 10px;
+}
+
+.confidence-high {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.confidence-low {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.proposal-actions-list {
+  list-style: none;
+  margin: 8px 0;
+}
+
+.proposal-actions-list li {
+  font-size: 12px;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--figma-color-border, #f0f0f0);
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+}
+
+.proposal-actions-list li:last-child {
+  border-bottom: none;
+}
+
+.proposal-actions-list .action-icon {
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  background: #ede9fe;
+  color: #6d28d9;
+}
+
+.proposal-explanation {
+  font-size: 11px;
+  color: var(--figma-color-text-secondary, #666);
+  margin-top: 8px;
+  font-style: italic;
+}
+
+.proposal-loading {
+  padding: 20px;
+  text-align: center;
+  color: var(--figma-color-text-secondary, #666);
+}
+
+.proposal-error {
+  padding: 10px 12px;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  color: #dc2626;
+  font-size: 12px;
+}
+
+.needs-clarification {
+  padding: 10px 12px;
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  border-radius: 8px;
+  color: #92400e;
+  font-size: 12px;
+}
+
+/* ── Focus Actions ──────────────────────────────────────────── */
+.focus-actions {
+  display: flex;
+  gap: 8px;
+  padding: 12px 16px;
+  border-top: 1px solid var(--figma-color-border, #eee);
+  background: var(--figma-color-bg, #fff);
+}
+
+.focus-actions .btn-apply {
+  flex: 1;
+  padding: 10px 16px;
+  background: #059669;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.focus-actions .btn-apply:hover { background: #047857; }
+.focus-actions .btn-apply:disabled {
+  background: #a7f3d0;
+  cursor: not-allowed;
+}
+
+.focus-actions .btn-edit {
+  padding: 10px 14px;
+  background: var(--figma-color-bg-secondary, #f3f4f6);
+  color: var(--figma-color-text, #333);
+  border: 1px solid var(--figma-color-border, #ddd);
+  border-radius: 6px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.focus-actions .btn-skip {
+  padding: 10px 14px;
+  background: none;
+  color: var(--figma-color-text-secondary, #666);
+  border: 1px solid var(--figma-color-border, #ddd);
+  border-radius: 6px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+/* ── Modal ──────────────────────────────────────────────────── */
+.modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+
+.modal-content {
+  background: var(--figma-color-bg, #fff);
+  border-radius: 10px;
+  padding: 20px;
+  width: 90%;
+  max-width: 340px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
+}
+
+.modal-content h3 {
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 10px;
+}
+
+.modal-content textarea {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid var(--figma-color-border, #ddd);
+  border-radius: 6px;
+  font-size: 12px;
+  font-family: inherit;
+  resize: vertical;
+  outline: none;
+}
+
+.modal-content textarea:focus {
+  border-color: #7c3aed;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  margin-top: 12px;
+}
+
+/* ── Loading Overlay ────────────────────────────────────────── */
+.loading-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(255, 255, 255, 0.85);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  z-index: 90;
+}
+
+.spinner {
+  width: 24px;
+  height: 24px;
+  border: 3px solid var(--figma-color-border, #e5e7eb);
+  border-top-color: #7c3aed;
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.loading-overlay p {
+  font-size: 12px;
+  color: var(--figma-color-text-secondary, #666);
+}
+
+/* ── Toast ──────────────────────────────────────────────────── */
+.toast {
+  position: fixed;
+  bottom: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 500;
+  z-index: 110;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transition: opacity 0.2s;
+}
+
+.toast-success {
+  background: #065f46;
+  color: #fff;
+}
+
+.toast-error {
+  background: #dc2626;
+  color: #fff;
+}
+
+.toast-info {
+  background: #1e40af;
+  color: #fff;
+}
+
+/* ── Inline spinner (small) ─────────────────────────────────── */
+.spinner-inline {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 2px solid #e5e7eb;
+  border-top-color: #7c3aed;
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+  vertical-align: middle;
+  margin-right: 4px;
+}
+</style>
+</head>
+<body>
+  <div id="app">
+    <!-- ── Setup View ─────────────────────────────────────── -->
+    <div id="setup-view" class="view">
+      <div class="setup-container">
+        <div class="setup-header">
+          <div class="logo">AI</div>
+          <h1>Comment Assistant</h1>
+          <p class="subtitle">Set up your API keys to get started.</p>
+        </div>
+        <div class="form-group">
+          <label for="claude-key">Claude API Key</label>
+          <input
+            type="password"
+            id="claude-key"
+            placeholder="sk-ant-api03-..."
+            spellcheck="false"
+          />
+          <span class="hint">Get your key at console.anthropic.com</span>
+        </div>
+        <div class="form-group">
+          <label for="figma-token">Figma Access Token</label>
+          <input
+            type="password"
+            id="figma-token"
+            placeholder="figd_..."
+            spellcheck="false"
+          />
+          <span class="hint">Settings → Account → Personal access tokens</span>
+        </div>
+        <button id="save-keys-btn" class="btn-primary">Save &amp; Continue</button>
+        <div id="setup-error" class="error-msg hidden"></div>
+      </div>
+    </div>
+
+    <!-- ── Inbox View ─────────────────────────────────────── -->
+    <div id="inbox-view" class="view hidden">
+      <div class="inbox-header">
+        <h2>Comments</h2>
+        <div class="header-actions">
+          <button id="refresh-btn" class="btn-icon" title="Refresh comments">&#8635;</button>
+          <button id="settings-btn" class="btn-icon" title="Settings">&#9881;</button>
+        </div>
+      </div>
+      <div id="inbox-stats" class="inbox-stats"></div>
+      <div id="comment-list" class="comment-list"></div>
+      <div id="inbox-empty" class="empty-state hidden">
+        <p>No comments found in this file.</p>
+        <button id="empty-refresh-btn" class="btn-secondary">Refresh</button>
+      </div>
+    </div>
+
+    <!-- ── Focus View ─────────────────────────────────────── -->
+    <div id="focus-view" class="view hidden">
+      <button id="back-btn" class="btn-back">&larr; Back to list</button>
+      <div id="focus-content">
+        <div id="focus-comment" class="focus-section"></div>
+        <div id="focus-proposal" class="focus-section"></div>
+        <div id="focus-actions" class="focus-actions"></div>
+      </div>
+    </div>
+
+    <!-- ── Edit Proposal Modal ────────────────────────────── -->
+    <div id="edit-modal" class="modal hidden">
+      <div class="modal-content">
+        <h3>Edit Proposal</h3>
+        <textarea id="edit-textarea" rows="4" placeholder="Describe what you want..."></textarea>
+        <div class="modal-actions">
+          <button id="edit-cancel-btn" class="btn-secondary">Cancel</button>
+          <button id="edit-submit-btn" class="btn-primary">Re-analyze</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Loading Overlay ────────────────────────────────── -->
+    <div id="loading-overlay" class="loading-overlay hidden">
+      <div class="spinner"></div>
+      <p id="loading-text">Loading...</p>
+    </div>
+
+    <!-- ── Toast ──────────────────────────────────────────── -->
+    <div id="toast" class="toast hidden"></div>
+  </div>
+
+  <script>"use strict";
+(() => {
+  // src/ui/ai.ts
+  var CLAUDE_API_URL = "https://api.anthropic.com/v1/messages";
+  var MODEL = "claude-sonnet-4-20250514";
+  var SYSTEM_PROMPT = `You are a Figma design assistant. Your job is to analyze design review comments and propose specific, actionable changes.
+
+ALLOWED ACTIONS (you may ONLY propose these):
+- change_text: Change the text content of a text node. Params: { "newText": "string" }
+- change_color: Change the fill color of a node. Params: { "color": { "r": 0-255, "g": 0-255, "b": 0-255 } }
+- delete_node: Delete a node from the canvas. Params: {}
+- hide_node: Hide a node (make invisible). Params: {}
+- duplicate_node: Duplicate a node. Params: {}
+
+RULES:
+1. Only propose actions from the allowed list above.
+2. If the comment does not clearly map to any allowed action, return confidence "low" and comment_type "unknown" with an empty actions array.
+3. Be conservative \u2014 if you're not sure, set confidence to "low".
+4. Return ONLY valid JSON, no markdown fences, no explanation outside the JSON.
+5. For color changes, interpret color names (e.g. "blue" = {"r":37,"g":99,"b":235}, "red" = {"r":220,"g":38,"b":38}, "green" = {"r":22,"g":163,"b":74}, "black" = {"r":0,"g":0,"b":0}, "white" = {"r":255,"g":255,"b":255}).
+
+RESPONSE FORMAT (strict JSON):
+{
+  "confidence": "high" | "low",
+  "comment_type": "text_change" | "color_change" | "delete_hide" | "duplicate" | "unknown",
+  "actions": [
+    {
+      "type": "<action_type>",
+      "params": { ... },
+      "description": "Human-readable description of this action"
+    }
+  ],
+  "explanation": "One sentence explaining the reasoning"
+}`;
+  function buildUserMessage(commentText, nodeInfo) {
+    let msg = `COMMENT: "${commentText}"
+
+`;
+    if (nodeInfo) {
+      msg += `TARGET NODE:
+`;
+      msg += `- Type: ${nodeInfo.type}
+`;
+      msg += `- Name: "${nodeInfo.name}"
+`;
+      if (nodeInfo.text !== void 0) {
+        msg += `- Current text: "${nodeInfo.text}"
+`;
+      }
+      if (nodeInfo.fills && nodeInfo.fills.length > 0) {
+        const solidFill = nodeInfo.fills.find((f) => f.type === "SOLID" && f.color);
+        if (solidFill && solidFill.color) {
+          const c = solidFill.color;
+          msg += `- Current color: rgb(${c.r}, ${c.g}, ${c.b})
+`;
+        }
+      }
+      msg += `- Visible: ${nodeInfo.visible}
+`;
+      if (nodeInfo.parentName) {
+        msg += `- Parent frame: "${nodeInfo.parentName}"
+`;
+      }
+    } else {
+      msg += `TARGET NODE: No specific node linked to this comment.
+`;
+    }
+    msg += `
+Propose the appropriate action(s) based on the comment. Return ONLY JSON.`;
+    return msg;
+  }
+  function parseAIResponse(text, nodeId) {
+    let cleaned = text.trim();
+    if (cleaned.startsWith("```")) {
+      cleaned = cleaned.replace(/^```(?:json)?\s*/, "").replace(/\s*```$/, "");
+    }
+    const parsed = JSON.parse(cleaned);
+    const allowedTypes = [
+      "change_text",
+      "change_color",
+      "delete_node",
+      "hide_node",
+      "duplicate_node"
+    ];
+    const actions = (parsed.actions || []).filter((a) => allowedTypes.includes(a.type)).map((a) => ({
+      type: a.type,
+      nodeId,
+      params: a.params || {},
+      description: a.description || ""
+    }));
+    const validTypes = [
+      "text_change",
+      "color_change",
+      "delete_hide",
+      "duplicate",
+      "unknown"
+    ];
+    return {
+      confidence: parsed.confidence === "high" ? "high" : "low",
+      commentType: validTypes.includes(parsed.comment_type) ? parsed.comment_type : "unknown",
+      actions,
+      explanation: parsed.explanation || ""
+    };
+  }
+  async function classifyComment(apiKey, commentText) {
+    const response = await fetch(CLAUDE_API_URL, {
+      method: "POST",
+      headers: {
+        "x-api-key": apiKey,
+        "anthropic-version": "2023-06-01",
+        "anthropic-dangerous-direct-browser-access": "true",
+        "content-type": "application/json"
+      },
+      body: JSON.stringify({
+        model: MODEL,
+        max_tokens: 100,
+        messages: [
+          {
+            role: "user",
+            content: `Classify this Figma design comment into ONE category. Reply with ONLY the category name, nothing else.
+
+Categories: text_change, color_change, delete_hide, duplicate, unknown
+
+Comment: "${commentText}"`
+          }
+        ]
+      })
+    });
+    if (!response.ok) {
+      return "unknown";
+    }
+    const data = await response.json();
+    const result = (data.content?.[0]?.text || "").trim().toLowerCase();
+    const validTypes = [
+      "text_change",
+      "color_change",
+      "delete_hide",
+      "duplicate",
+      "unknown"
+    ];
+    return validTypes.includes(result) ? result : "unknown";
+  }
+  async function analyzeComment(apiKey, commentText, nodeId, nodeInfo) {
+    const response = await fetch(CLAUDE_API_URL, {
+      method: "POST",
+      headers: {
+        "x-api-key": apiKey,
+        "anthropic-version": "2023-06-01",
+        "anthropic-dangerous-direct-browser-access": "true",
+        "content-type": "application/json"
+      },
+      body: JSON.stringify({
+        model: MODEL,
+        max_tokens: 1024,
+        system: SYSTEM_PROMPT,
+        messages: [
+          {
+            role: "user",
+            content: buildUserMessage(commentText, nodeInfo)
+          }
+        ]
+      })
+    });
+    if (!response.ok) {
+      const errorBody = await response.text();
+      throw new Error(`Claude API error (${response.status}): ${errorBody}`);
+    }
+    const data = await response.json();
+    const text = data.content?.[0]?.text || "";
+    return parseAIResponse(text, nodeId);
+  }
+  async function reAnalyzeComment(apiKey, originalComment, userEdit, nodeId, nodeInfo) {
+    const combinedComment = `Original comment: "${originalComment}"
+
+User clarification: "${userEdit}"`;
+    return analyzeComment(apiKey, combinedComment, nodeId, nodeInfo);
+  }
+
+  // src/ui/main.ts
+  var state = {
+    view: "setup",
+    claudeApiKey: "",
+    figmaToken: "",
+    fileKey: "",
+    comments: [],
+    selectedCommentId: null,
+    loading: false
+  };
+  function $(id) {
+    return document.getElementById(id);
+  }
+  function show(id) {
+    const el = document.getElementById(id);
+    if (el) el.classList.remove("hidden");
+  }
+  function hide(id) {
+    const el = document.getElementById(id);
+    if (el) el.classList.add("hidden");
+  }
+  function showView(view) {
+    state.view = view;
+    hide("setup-view");
+    hide("inbox-view");
+    hide("focus-view");
+    show(`${view}-view`);
+  }
+  function showLoading(text) {
+    state.loading = true;
+    $("loading-text").textContent = text;
+    show("loading-overlay");
+  }
+  function hideLoading() {
+    state.loading = false;
+    hide("loading-overlay");
+  }
+  var toastTimer = null;
+  function showToast(msg, type = "info") {
+    const el = $("toast");
+    el.textContent = msg;
+    el.className = `toast toast-${type}`;
+    if (toastTimer) clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => {
+      el.classList.add("hidden");
+    }, 2500);
+  }
+  function postToPlugin(msg) {
+    parent.postMessage({ pluginMessage: msg }, "*");
+  }
+  function requestFromPlugin(msg, responseType, matchKey, timeoutMs = 5e3) {
+    return new Promise((resolve, reject) => {
+      const timer = setTimeout(() => {
+        window.removeEventListener("message", handler);
+        reject(new Error(`Plugin response timeout for "${responseType}"`));
+      }, timeoutMs);
+      const handler = (event) => {
+        const data = event.data?.pluginMessage;
+        if (!data || data.type !== responseType) return;
+        if (matchKey && "key" in data && data.key !== matchKey) return;
+        clearTimeout(timer);
+        window.removeEventListener("message", handler);
+        resolve(data);
+      };
+      window.addEventListener("message", handler);
+      postToPlugin(msg);
+    });
+  }
+  async function fetchComments(fileKey, token) {
+    const res = await fetch(`https://api.figma.com/v1/files/${fileKey}/comments`, {
+      headers: { "X-Figma-Token": token }
+    });
+    if (!res.ok) {
+      const body = await res.text();
+      throw new Error(`Figma API error (${res.status}): ${body}`);
+    }
+    const data = await res.json();
+    return data.comments || [];
+  }
+  function transformComments(raw) {
+    return raw.filter((c) => !c.parent_id && !c.resolved_at).map((c) => ({
+      id: c.id,
+      message: c.message,
+      author: c.user.handle,
+      authorAvatar: c.user.img_url,
+      pageOrFrame: "",
+      status: "pending",
+      commentType: "unknown",
+      nodeId: c.client_meta?.node_id || null,
+      proposal: null,
+      resolved: false,
+      createdAt: c.created_at
+    }));
+  }
+  function initSetup() {
+    $("save-keys-btn").addEventListener("click", async () => {
+      const claudeKey = document.getElementById("claude-key").value.trim();
+      const figmaToken = document.getElementById("figma-token").value.trim();
+      if (!claudeKey || !figmaToken) {
+        show("setup-error");
+        $("setup-error").textContent = "Both keys are required.";
+        return;
+      }
+      hide("setup-error");
+      state.claudeApiKey = claudeKey;
+      state.figmaToken = figmaToken;
+      postToPlugin({ type: "store-set", key: "claude-api-key", value: claudeKey });
+      postToPlugin({ type: "store-set", key: "figma-token", value: figmaToken });
+      await loadComments();
+    });
+  }
+  function renderInbox() {
+    const list = $("comment-list");
+    const empty = $("inbox-empty");
+    const stats = $("inbox-stats");
+    if (state.comments.length === 0) {
+      list.classList.add("hidden");
+      empty.classList.remove("hidden");
+      stats.innerHTML = "";
+      return;
+    }
+    empty.classList.add("hidden");
+    list.classList.remove("hidden");
+    const counts = {};
+    for (const c of state.comments) {
+      counts[c.status] = (counts[c.status] || 0) + 1;
+    }
+    const statusLabels = {
+      pending: "Pending",
+      proposal_ready: "Ready",
+      needs_clarification: "Unclear",
+      applied: "Applied",
+      skipped: "Skipped"
+    };
+    const statusIcons = {
+      pending: "\u23F3",
+      proposal_ready: "\u{1F916}",
+      needs_clarification: "\u26A0\uFE0F",
+      applied: "\u2705",
+      skipped: "\u26D4"
+    };
+    stats.innerHTML = Object.entries(counts).map(
+      ([s, n]) => `<span class="stat-badge">${statusIcons[s] || ""} ${n} ${statusLabels[s] || s}</span>`
+    ).join("");
+    list.innerHTML = state.comments.map((c) => {
+      const typeLabel = formatCommentType(c.commentType);
+      const statusClass = `status-${c.status}`;
+      const appliedClass = c.status === "applied" ? " applied" : "";
+      return `
+        <div class="comment-card${appliedClass}" data-id="${c.id}">
+          <div class="comment-status-icon ${statusClass}">
+            ${statusIcons[c.status] || "?"}
+          </div>
+          <div class="comment-body">
+            <div class="comment-meta">
+              <span class="comment-author">${escapeHtml(c.author)}</span>
+              <span class="comment-type-badge">${typeLabel}</span>
+            </div>
+            <div class="comment-text">${escapeHtml(c.message)}</div>
+            ${c.pageOrFrame ? `<div class="comment-frame">${escapeHtml(c.pageOrFrame)}</div>` : ""}
+          </div>
+        </div>
+      `;
+    }).join("");
+    list.querySelectorAll(".comment-card").forEach((card) => {
+      card.addEventListener("click", () => {
+        const id = card.dataset.id;
+        openFocusView(id);
+      });
+    });
+  }
+  function formatCommentType(t) {
+    const map = {
+      text_change: "Text",
+      color_change: "Color",
+      delete_hide: "Delete/Hide",
+      duplicate: "Duplicate",
+      unknown: "Other"
+    };
+    return map[t] || "Other";
+  }
+  function escapeHtml(s) {
+    const div = document.createElement("div");
+    div.textContent = s;
+    return div.innerHTML;
+  }
+  async function openFocusView(commentId) {
+    state.selectedCommentId = commentId;
+    const comment = state.comments.find((c) => c.id === commentId);
+    if (!comment) return;
+    showView("focus");
+    if (comment.nodeId) {
+      postToPlugin({ type: "select-node", nodeId: comment.nodeId });
+    }
+    renderFocusComment(comment);
+    if (!comment.proposal && comment.status === "pending") {
+      await generateProposal(comment);
+    } else {
+      renderFocusProposal(comment);
+    }
+    renderFocusActions(comment);
+  }
+  function renderFocusComment(comment) {
+    const el = $("focus-comment");
+    el.innerHTML = `
+    <h3>Comment</h3>
+    <div class="focus-comment-text">${escapeHtml(comment.message)}</div>
+    <div class="focus-author">By ${escapeHtml(comment.author)} &middot; ${formatDate(comment.createdAt)}</div>
+    <div id="focus-node-box"></div>
+  `;
+    if (comment.nodeId) {
+      requestFromPlugin(
+        { type: "get-node-info", nodeId: comment.nodeId },
+        "node-info"
+      ).then((msg) => {
+        const box = document.getElementById("focus-node-box");
+        if (!box) return;
+        if (msg.info) {
+          box.innerHTML = `
+          <div class="focus-node-info">
+            <span><strong>Node:</strong> ${escapeHtml(msg.info.name)} (${msg.info.type})</span>
+            ${msg.info.text !== void 0 ? `<span><strong>Text:</strong> "${escapeHtml(msg.info.text)}"</span>` : ""}
+            ${msg.info.fills?.length ? `<span><strong>Fill:</strong> ${formatFill(msg.info.fills[0])}</span>` : ""}
+            ${msg.info.parentName ? `<span><strong>Frame:</strong> ${escapeHtml(msg.info.parentName)}</span>` : ""}
+          </div>
+        `;
+        } else {
+          box.innerHTML = `<div class="focus-node-info">Node not found on canvas.</div>`;
+        }
+      }).catch(() => {
+      });
+    }
+  }
+  function formatFill(fill) {
+    if (fill.type === "SOLID" && fill.color) {
+      const hex = rgbToHex(fill.color.r, fill.color.g, fill.color.b);
+      return `<span style="display:inline-block;width:10px;height:10px;background:${hex};border-radius:2px;border:1px solid #ccc;vertical-align:middle;margin-right:4px;"></span>${hex}`;
+    }
+    return fill.type;
+  }
+  function rgbToHex(r, g, b) {
+    return "#" + [r, g, b].map((v) => v.toString(16).padStart(2, "0")).join("");
+  }
+  function formatDate(iso) {
+    try {
+      const d = new Date(iso);
+      return d.toLocaleDateString(void 0, { month: "short", day: "numeric" });
+    } catch {
+      return "";
+    }
+  }
+  async function generateProposal(comment) {
+    const proposalEl = $("focus-proposal");
+    proposalEl.innerHTML = `
+    <h3>Proposed Changes</h3>
+    <div class="proposal-loading"><span class="spinner-inline"></span> Analyzing comment...</div>
+  `;
+    try {
+      let nodeInfo = null;
+      if (comment.nodeId) {
+        try {
+          const msg = await requestFromPlugin(
+            { type: "get-node-info", nodeId: comment.nodeId },
+            "node-info"
+          );
+          nodeInfo = msg.info;
+        } catch {
+          nodeInfo = null;
+        }
+        if (nodeInfo === null) {
+          comment.status = "needs_clarification";
+          comment.proposal = {
+            confidence: "low",
+            commentType: "unknown",
+            actions: [],
+            explanation: "The target node could not be found on the canvas."
+          };
+          renderFocusProposal(comment);
+          renderFocusActions(comment);
+          return;
+        }
+        if (nodeInfo.locked) {
+          comment.status = "needs_clarification";
+          comment.proposal = {
+            confidence: "low",
+            commentType: "unknown",
+            actions: [],
+            explanation: "The target node is locked and cannot be modified."
+          };
+          renderFocusProposal(comment);
+          renderFocusActions(comment);
+          return;
+        }
+      }
+      const nodeId = comment.nodeId || "";
+      const proposal = await analyzeComment(
+        state.claudeApiKey,
+        comment.message,
+        nodeId,
+        nodeInfo
+      );
+      comment.proposal = proposal;
+      comment.commentType = proposal.commentType;
+      if (proposal.actions.length === 0 || proposal.confidence === "low") {
+        comment.status = proposal.actions.length === 0 ? "needs_clarification" : "proposal_ready";
+      } else {
+        comment.status = "proposal_ready";
+      }
+      renderFocusProposal(comment);
+      renderFocusActions(comment);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      proposalEl.innerHTML = `
+      <h3>Proposed Changes</h3>
+      <div class="proposal-error">Failed to analyze comment: ${escapeHtml(message)}</div>
+    `;
+      renderFocusActions(comment);
+    }
+  }
+  function renderFocusProposal(comment) {
+    const el = $("focus-proposal");
+    if (!comment.proposal) {
+      el.innerHTML = `<h3>Proposed Changes</h3><p class="proposal-loading">No proposal yet.</p>`;
+      return;
+    }
+    const p = comment.proposal;
+    if (comment.status === "needs_clarification") {
+      el.innerHTML = `
+      <h3>Proposed Changes</h3>
+      <div class="needs-clarification">
+        <strong>Needs Clarification</strong><br/>
+        ${escapeHtml(p.explanation)}
+      </div>
+    `;
+      return;
+    }
+    if (comment.status === "applied") {
+      el.innerHTML = `
+      <h3>Proposed Changes</h3>
+      <div class="proposal-card" style="border-color:#059669;">
+        <div class="proposal-confidence confidence-high">Applied</div>
+        <p style="font-size:12px;color:#065f46;">Changes have been applied successfully.</p>
+      </div>
+    `;
+      return;
+    }
+    if (comment.status === "skipped") {
+      el.innerHTML = `
+      <h3>Proposed Changes</h3>
+      <div class="proposal-card" style="opacity:0.6;">
+        <div class="proposal-confidence" style="background:#f3f4f6;color:#6b7280;">Skipped</div>
+      </div>
+    `;
+      return;
+    }
+    const actionIcons = {
+      change_text: "T",
+      change_color: "C",
+      delete_node: "X",
+      hide_node: "H",
+      duplicate_node: "D"
+    };
+    const actionsHtml = p.actions.map(
+      (a) => `
+      <li>
+        <span class="action-icon">${actionIcons[a.type] || "?"}</span>
+        <span>${escapeHtml(a.description)}</span>
+      </li>
+    `
+    ).join("");
+    el.innerHTML = `
+    <h3>Proposed Changes</h3>
+    <div class="proposal-card">
+      <div class="proposal-confidence confidence-${p.confidence}">${p.confidence} confidence</div>
+      ${p.actions.length > 0 ? `<ul class="proposal-actions-list">${actionsHtml}</ul>` : '<p style="font-size:12px;color:#666;margin:8px 0;">No specific actions identified.</p>'}
+      <div class="proposal-explanation">${escapeHtml(p.explanation)}</div>
+    </div>
+  `;
+  }
+  function renderFocusActions(comment) {
+    const el = $("focus-actions");
+    if (comment.status === "applied" || comment.status === "skipped") {
+      el.innerHTML = `
+      <button class="btn-secondary" id="back-to-list-btn">Back to list</button>
+    `;
+      $("back-to-list-btn").addEventListener("click", () => {
+        $("back-btn").click();
+      });
+      return;
+    }
+    const canApply = comment.proposal && comment.proposal.actions.length > 0 && comment.status === "proposal_ready";
+    el.innerHTML = `
+    <button class="btn-apply" id="apply-btn" ${canApply ? "" : "disabled"}>Apply</button>
+    <button class="btn-edit" id="edit-btn">Edit</button>
+    <button class="btn-skip" id="skip-btn">Skip</button>
+  `;
+    $("apply-btn").addEventListener("click", async () => {
+      if (!comment.proposal || !comment.proposal.actions.length) return;
+      showLoading("Applying changes...");
+      for (const action of comment.proposal.actions) {
+        try {
+          const result = await requestFromPlugin(
+            { type: "execute-action", action },
+            "action-executed",
+            void 0,
+            1e4
+          );
+          if (!result.success) {
+            hideLoading();
+            showToast(`Failed: ${result.error || "Unknown error"}`, "error");
+            return;
+          }
+        } catch {
+          hideLoading();
+          showToast("Action timed out. Please try again.", "error");
+          return;
+        }
+      }
+      hideLoading();
+      comment.status = "applied";
+      showToast("Changes applied!", "success");
+      renderFocusProposal(comment);
+      renderFocusActions(comment);
+    });
+    $("edit-btn").addEventListener("click", () => {
+      show("edit-modal");
+      document.getElementById("edit-textarea").value = "";
+      document.getElementById("edit-textarea").focus();
+    });
+    $("skip-btn").addEventListener("click", () => {
+      comment.status = "skipped";
+      showToast("Comment skipped", "info");
+      renderFocusProposal(comment);
+      renderFocusActions(comment);
+    });
+  }
+  function initEditModal() {
+    $("edit-cancel-btn").addEventListener("click", () => hide("edit-modal"));
+    $("edit-submit-btn").addEventListener("click", async () => {
+      const userEdit = document.getElementById("edit-textarea").value.trim();
+      if (!userEdit) return;
+      hide("edit-modal");
+      const comment = state.comments.find((c) => c.id === state.selectedCommentId);
+      if (!comment) return;
+      comment.status = "pending";
+      comment.proposal = null;
+      const proposalEl = $("focus-proposal");
+      proposalEl.innerHTML = `
+      <h3>Proposed Changes</h3>
+      <div class="proposal-loading"><span class="spinner-inline"></span> Re-analyzing with your input...</div>
+    `;
+      try {
+        let nodeInfo = null;
+        if (comment.nodeId) {
+          try {
+            const msg = await requestFromPlugin(
+              { type: "get-node-info", nodeId: comment.nodeId },
+              "node-info"
+            );
+            nodeInfo = msg.info;
+          } catch {
+            nodeInfo = null;
+          }
+        }
+        const proposal = await reAnalyzeComment(
+          state.claudeApiKey,
+          comment.message,
+          userEdit,
+          comment.nodeId || "",
+          nodeInfo
+        );
+        comment.proposal = proposal;
+        comment.commentType = proposal.commentType;
+        comment.status = proposal.actions.length === 0 ? "needs_clarification" : "proposal_ready";
+        renderFocusProposal(comment);
+        renderFocusActions(comment);
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        proposalEl.innerHTML = `
+        <h3>Proposed Changes</h3>
+        <div class="proposal-error">Re-analysis failed: ${escapeHtml(message)}</div>
+      `;
+      }
+    });
+  }
+  async function loadComments() {
+    showLoading("Loading comments...");
+    try {
+      if (!state.fileKey) {
+        try {
+          const msg = await requestFromPlugin(
+            { type: "get-file-key" },
+            "file-key",
+            void 0,
+            3e3
+          );
+          state.fileKey = msg.fileKey;
+        } catch {
+          throw new Error("Could not get file key. Make sure the file is saved to Figma.");
+        }
+      }
+      if (!state.fileKey) {
+        throw new Error("Could not get file key. Make sure the file is saved to Figma.");
+      }
+      const raw = await fetchComments(state.fileKey, state.figmaToken);
+      state.comments = transformComments(raw);
+      hideLoading();
+      showView("inbox");
+      renderInbox();
+      classifyCommentsInBackground();
+    } catch (err) {
+      hideLoading();
+      const message = err instanceof Error ? err.message : String(err);
+      showToast(`Error: ${message}`, "error");
+      if (message.includes("403") || message.includes("401")) {
+        showView("setup");
+        show("setup-error");
+        $("setup-error").textContent = "Invalid Figma token. Please check and try again.";
+      }
+    }
+  }
+  async function classifyCommentsInBackground() {
+    for (const comment of state.comments) {
+      if (comment.status !== "pending") continue;
+      try {
+        const type = await classifyComment(state.claudeApiKey, comment.message);
+        comment.commentType = type;
+        if (state.view === "inbox") {
+          renderInbox();
+        }
+      } catch {
+      }
+    }
+  }
+  function initNavigation() {
+    $("back-btn").addEventListener("click", () => {
+      state.selectedCommentId = null;
+      showView("inbox");
+      renderInbox();
+    });
+    $("refresh-btn").addEventListener("click", () => loadComments());
+    $("empty-refresh-btn").addEventListener("click", () => loadComments());
+    $("settings-btn").addEventListener("click", () => {
+      showView("setup");
+      document.getElementById("claude-key").value = state.claudeApiKey;
+      document.getElementById("figma-token").value = state.figmaToken;
+    });
+  }
+  async function init() {
+    try {
+      initSetup();
+      initNavigation();
+      initEditModal();
+    } catch (err) {
+      console.error("[AI Comment Assistant] UI init error:", err);
+    }
+    window.addEventListener("message", (event) => {
+      const msg = event.data?.pluginMessage;
+      if (msg && msg.type === "file-key") {
+        state.fileKey = msg.fileKey;
+      }
+    });
+    try {
+      const claudeKeyMsg = await requestFromPlugin(
+        { type: "store-get", key: "claude-api-key" },
+        "store-value",
+        "claude-api-key",
+        3e3
+      );
+      const figmaTokenMsg = await requestFromPlugin(
+        { type: "store-get", key: "figma-token" },
+        "store-value",
+        "figma-token",
+        3e3
+      );
+      if (claudeKeyMsg.value && figmaTokenMsg.value) {
+        state.claudeApiKey = claudeKeyMsg.value;
+        state.figmaToken = figmaTokenMsg.value;
+        await loadComments();
+      } else {
+        showView("setup");
+      }
+    } catch {
+      console.log("[AI Comment Assistant] No stored keys found, showing setup.");
+      showView("setup");
+    }
+  }
+  init();
+})();
+</script>
+</body>
+</html>
